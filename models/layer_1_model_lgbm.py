@@ -35,7 +35,9 @@ features = ['NAME_CONTRACT_TYPE', 'CODE_GENDER', 'FLAG_OWN_CAR', 'FLAG_OWN_REALT
             'FLAG_DOCUMENT_14', 'FLAG_DOCUMENT_15', 'FLAG_DOCUMENT_16', 'FLAG_DOCUMENT_17', 'FLAG_DOCUMENT_18',
             'FLAG_DOCUMENT_19', 'FLAG_DOCUMENT_20', 'FLAG_DOCUMENT_21', 'AMT_REQ_CREDIT_BUREAU_HOUR',
             'AMT_REQ_CREDIT_BUREAU_DAY', 'AMT_REQ_CREDIT_BUREAU_WEEK', 'AMT_REQ_CREDIT_BUREAU_MON',
-            'AMT_REQ_CREDIT_BUREAU_QRT', 'AMT_REQ_CREDIT_BUREAU_YEAR']
+            'AMT_REQ_CREDIT_BUREAU_QRT', 'AMT_REQ_CREDIT_BUREAU_YEAR',
+            # Features do BUREAU
+            'BUREAU_NUMBER_OF_LOANS', 'BUREAU_NUMBER_OF_CLOSED_LOANS', 'BUREAU_NUMBER_OF_ACTIVE_LOANS', 'BUREAU_NUMBER_OF_SOLD_LOANS', 'DAYS_CREDIT_DIFF_MEAN', 'MEAN_OF_LOAN_DAYS']
 
 
 def name():
@@ -49,10 +51,13 @@ def run(train_df, test_df):
     dataset = lgb.Dataset(x_train, y_train)
     params = {'boosting_type': 'gbdt', 'class_weight': None, 'colsample_bytree': 0.7, 'learning_rate': 0.001,
               'max_depth': 3, 'min_child_samples': 20, 'min_child_weight': 0.001, 'min_split_gain': 0.0,
-              'n_estimators': 150, 'n_jobs': -1, 'num_leaves': 2, 'objective': 'regression', 'reg_alpha': 0,
+              'n_estimators': 150, 'n_jobs': -1, 'num_leaves': 2,
+              'objective': 'binary',
+              'reg_alpha': 0,
               'reg_lambda': 0, 'silent': True, 'subsample': 0.8, 'subsample_for_bin': 200000, 'subsample_freq': 1,
               'nthread': 3, 'bagging_fraction': 0.5, 'bagging_freq': 5, 'feature_fraction': 0.2, 'is_unbalance': True,
-              'metric': {'binary_logloss'}, 'verbose': 0}
+              'metric': {'auc'},
+              'verbose': 0}
 
     # Use small learning_rate with large num_iterations
     params['num_iterations'] = 5000

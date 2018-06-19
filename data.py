@@ -70,6 +70,10 @@ def load_dataset():
     del test_df
 
     full_df = convert_categorical_features(full_df)
+
+    bureau_processed_df = pd.read_csv(os.path.join(dataset_dir, 'bureau_processed.csv'))
+    full_df = full_df.merge(right=bureau_processed_df, on=['SK_ID_CURR'], how='left')
+
     train_df = full_df[full_df.dataset == 0]
     del train_df['dataset']
 
@@ -78,7 +82,7 @@ def load_dataset():
     del test_df['TARGET']
 
     print('Processed full_df memory size %s' % (memory_usage(full_df)))
-    validate_dataframe(full_df, train_df, test_df)
+    #validate_dataframe(full_df, train_df, test_df)
 
     del full_df
     return train_df, test_df
