@@ -83,8 +83,8 @@ if __name__ == '__main__':
 
     np.random.seed(1985)
 
-    train_df, test_df = data.load_dataset()
-    scores, train_df, test_df = run(train_df, test_df)
+    train_predict_df, test_predict_df = data.load_dataset()
+    scores, train_predict_df, test_predict_df = run(train_predict_df, test_predict_df)
 
-    data.save_submission(train_df, name(), 'train', scores)
-    data.save_submission(test_df, name(), 'test', scores)
+    data.save_submission(train_predict_df, name(), 'train', scores)
+    data.save_submission(test_predict_df, name(), 'test', scores)

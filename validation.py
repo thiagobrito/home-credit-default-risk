@@ -24,7 +24,7 @@ def cross_val_predict_proba(classifier, X, y, features, n_folds=5, random_state=
         if verbose:
             print('\tcv=%d' % i, end=' ', flush=True)
 
-        classifier.fit(X[index_train], y[index_train])
+        classifier.fit(X[index_train], y[index_train], epochs=1)
         try:
             predict[index_test] = classifier.predict_proba(X[index_test])[:, 1]
         except:
@@ -32,8 +32,8 @@ def cross_val_predict_proba(classifier, X, y, features, n_folds=5, random_state=
         score = metrics.roc_auc_score(y[index_test], predict[index_test])
 
         # Identificando os itens que foram sucesso em pelo menos uma passagem
-        success_items[index_test] = np.logical_or(success_items[index_test],
-                                                  classifier.predict(X[index_test]) == y[index_test])
+        success_items[index_test] = np.logical_or(success_items[index_test], predict[index_test] == y[index_test])
+                                                  #classifier.predict(X[index_test]) == y[index_test])
 
         cross_scores = np.append(cross_scores, score)
         if verbose:
