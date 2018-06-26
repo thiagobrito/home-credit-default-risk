@@ -88,5 +88,5 @@ def load_dataset():
     return train_df, test_df
 
 
-def save_submission(df, model_name, scores):
-    df.to_csv(paths.make_results_path(model_name, np.median(scores)), index=False)
+def save_submission(df, model_name, type, scores):
+    df.to_csv(paths.make_results_path(model_name, type, np.median(scores)), index=False)

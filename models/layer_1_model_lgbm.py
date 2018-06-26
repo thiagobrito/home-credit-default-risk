@@ -37,7 +37,12 @@ features = ['NAME_CONTRACT_TYPE', 'CODE_GENDER', 'FLAG_OWN_CAR', 'FLAG_OWN_REALT
             'AMT_REQ_CREDIT_BUREAU_DAY', 'AMT_REQ_CREDIT_BUREAU_WEEK', 'AMT_REQ_CREDIT_BUREAU_MON',
             'AMT_REQ_CREDIT_BUREAU_QRT', 'AMT_REQ_CREDIT_BUREAU_YEAR',
             # Features do BUREAU
-            'BUREAU_NUMBER_OF_LOANS', 'BUREAU_NUMBER_OF_CLOSED_LOANS', 'BUREAU_NUMBER_OF_ACTIVE_LOANS', 'BUREAU_NUMBER_OF_SOLD_LOANS', 'DAYS_CREDIT_DIFF_MEAN', 'MEAN_OF_LOAN_DAYS']
+            'BUREAU_LOAN_COUNT', 'BUREAU_LOAN_TYPES',
+            'AVERAGE_LOAN_TYPE', 'ACTIVE_LOANS_PERCENTAGE', 'MIN_DAYS_DIFF', 'MAX_DAYS_DIFF', 'MEAN_DAYS_DIFF',
+            'STD_DAYS_DIFF', 'CREDIT_ENDDATE_PERCENTAGE', 'MIN_DAYS_ENDDATE_DIFF', 'MAX_DAYS_ENDDATE_DIFF', 'MEAN_DAYS_ENDDATE_DIFF',
+            'STD_DAYS_ENDDATE_DIFF', 'AVG_ENDDATE_FUTURE', 'TOTAL_CUSTOMER_DEBT', 'TOTAL_CUSTOMER_CREDIT', 'DEBT_CREDIT_RATIO',
+            'TOTAL_CUSTOMER_OVERDUE', 'OVERDUE_DEBT_RATIO', 'AVG_CREDITDAYS_PROLONGED'
+            ]
 
 
 def name():
@@ -63,12 +68,13 @@ def run(train_df, test_df):
     params['num_iterations'] = 5000
 
     model = LgbmAdapter(params, dataset, 20)
-    predict, cross_scores, success_items = validation.cross_val_predict_proba(model, x_train, y_train, features)
+    train_predict, cross_scores, success_items = validation.cross_val_predict_proba(model, x_train, y_train, features)
 
     print(name(), cross_scores)
 
     x_tournament, _ = data.extract_values_from_dataframe(test_df, features)
     return cross_scores, \
+           pd.DataFrame(data={'SK_ID_CURR': train_df["SK_ID_CURR"].values, 'TARGET': train_predict}),\
            pd.DataFrame(data={'SK_ID_CURR': test_df["SK_ID_CURR"].values, 'TARGET': model.predict(x_tournament)})
 
 
@@ -78,6 +84,7 @@ if __name__ == '__main__':
     np.random.seed(1985)
 
     train_df, test_df = data.load_dataset()
-    scores, df = run(train_df, test_df)
+    scores, train_df, test_df = run(train_df, test_df)
 
-    data.save_submission(df, name(), scores)
+    data.save_submission(train_df, name(), 'train', scores)
+    data.save_submission(test_df, name(), 'test', scores)

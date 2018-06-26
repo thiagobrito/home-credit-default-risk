@@ -1,8 +1,15 @@
+import os
 import numpy as np
+import json
 import datetime
 import operator
 from sklearn.model_selection import StratifiedKFold
 from sklearn import metrics
+import paths
+
+
+def cross_validation_index(X, y, n_folds, random_state):
+    return StratifiedKFold(n_splits=n_folds, random_state=random_state).split(X, y)
 
 
 def cross_val_predict_proba(classifier, X, y, features, n_folds=5, random_state=0, verbose=False):
@@ -11,7 +18,7 @@ def cross_val_predict_proba(classifier, X, y, features, n_folds=5, random_state=
     success_items = np.zeros(y.shape)
 
     i = 0
-    for index_train, index_test in StratifiedKFold(n_splits=n_folds, random_state=random_state).split(X, y):
+    for index_train, index_test in cross_validation_index(X, y, n_folds, random_state):
         start_time = datetime.datetime.now()
 
         if verbose:
@@ -31,8 +38,10 @@ def cross_val_predict_proba(classifier, X, y, features, n_folds=5, random_state=
         cross_scores = np.append(cross_scores, score)
         if verbose:
             print('time: %s | score=%f' % (
-            datetime.datetime.now() - start_time, score))  # , show_classificator_data(classifier, features)))
+                datetime.datetime.now() - start_time, score))  # , show_classificator_data(classifier, features)))
         i += 1
+    if verbose:
+        print('Final score: %f' % metrics.roc_auc_score(y, predict))
     return predict, cross_scores, success_items
 
 

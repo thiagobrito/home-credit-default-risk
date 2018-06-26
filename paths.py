@@ -12,6 +12,10 @@ def results_directory():
     return results
 
 
-def make_results_path(model_name, scores):
-    results_path = os.path.join(results_directory(), '%s_%f' % (model_name, scores))
+def make_results_path(model_name, type, scores):
+    results_path = os.path.join(results_directory(), '%s_%s_%f' % (model_name, type, scores))
     return results_path.replace('.', '_') + '.csv'
+
+
+def indices_path():
+    return os.path.join(results_directory(), 'indices.json')
