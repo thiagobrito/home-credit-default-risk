@@ -24,13 +24,14 @@ def bureau_feature_statistics(input_df, output_df, feature_name, agg_functions=N
     else:
         for f in agg_functions:
             columns[f] = f.upper() + '_' + feature_name
-    group = input_df.groupby(by=['SK_ID_CURR'])[feature_name].agg(agg_functions).reset_index().rename(index=str, columns=columns)
+    group = input_df.groupby(by=['SK_ID_CURR'])[feature_name].agg(agg_functions).reset_index().rename(index=str,
+                                                                                                      columns=columns)
     if output_df is not None:
         return output_df.merge(group, on=['SK_ID_CURR'], how='left')
     return group
 
 
-if __name__ == '__main__':
+def prepare_bureau_data():
     bureau_df = pd.read_csv('dataset/bureau.csv')
     new_df = bureau_df[['SK_ID_CURR', 'SK_ID_BUREAU']]
 
@@ -127,6 +128,10 @@ if __name__ == '__main__':
                                                           columns={'CNT_CREDIT_PROLONG': 'AVG_CREDITDAYS_PROLONGED'})
     new_df = new_df.merge(grp, on=['SK_ID_CURR'], how='left')
 
+    print('Collecting credit risk score')
+    bureau_balance_df = pd.read_csv('dataset/processed_bureau_balance.csv')
+    new_df = new_df.merge(bureau_balance_df[['SK_ID_BUREAU', 'RISK_SCORE']], on=['SK_ID_BUREAU'], how='left')
+
     # Gera features finais com informacoes estatisticas
     final_df = bureau_feature_statistics(new_df, None, 'BUREAU_LOAN_COUNT')
     final_df = bureau_feature_statistics(new_df, final_df, 'BUREAU_LOAN_TYPES')
@@ -142,6 +147,7 @@ if __name__ == '__main__':
     final_df = bureau_feature_statistics(new_df, final_df, 'TOTAL_CUSTOMER_OVERDUE')
     final_df = bureau_feature_statistics(new_df, final_df, 'OVERDUE_DEBT_RATIO')
     final_df = bureau_feature_statistics(new_df, final_df, 'AVG_CREDITDAYS_PROLONGED')
-    final_df.to_csv('dataset/bureau_processed.csv', index=False)
+    final_df = bureau_feature_statistics(new_df, final_df, 'RISK_SCORE', ['min', 'max', 'mean', 'std', 'sum'])
+    final_df.to_csv('dataset/processed_bureau.csv', index=False)
 
     print('Done.')

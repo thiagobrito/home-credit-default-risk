@@ -54,38 +54,24 @@ def extract_values_from_dataframe(df, features):
 
 
 def load_dataset():
-    dataset_dir = os.path.join(os.path.dirname(__file__), 'dataset')
-    train_df_file_path = os.path.join(dataset_dir, 'application_train.csv')
-    test_df_file_path = os.path.join(dataset_dir, 'application_test.csv')
+    df = pd.read_csv('../dataset/processed_application.csv')
 
-    train_df = pd.read_csv(train_df_file_path)
-    test_df = pd.read_csv(test_df_file_path)
+    bureau = pd.read_csv('../dataset/processed_bureau.csv')
+    df = df.join(bureau.set_index('SK_ID_CURR'), how='left', on='SK_ID_CURR')
 
-    train_df['dataset'] = 0
-    test_df['dataset'] = 1
-    test_df['TARGET'] = 0
+    credit_card_balance_df = pd.read_csv('../dataset/processed_credit_card_balance.csv')
+    df = df.join(credit_card_balance_df, how='left', on='SK_ID_CURR')
 
-    full_df = pd.concat([train_df, test_df])
-    del train_df
-    del test_df
+    installments_payments_df = pd.read_csv('../dataset/processed_installments_payments.csv')
+    df = df.join(installments_payments_df, how='left', on='SK_ID_CURR')
 
-    full_df = convert_categorical_features(full_df)
+    pos_cash_df = pd.read_csv('../dataset/processed_pos_cash.csv')
+    df = df.join(pos_cash_df, how='left', on='SK_ID_CURR')
 
-    bureau_processed_df = pd.read_csv(os.path.join(dataset_dir, 'bureau_processed.csv'))
-    full_df = full_df.merge(right=bureau_processed_df, on=['SK_ID_CURR'], how='left')
+    previous_applications_df = pd.read_csv('../dataset/processed_previous_applications.csv')
+    df = df.join(previous_applications_df, how='left', on='SK_ID_CURR')
 
-    train_df = full_df[full_df.dataset == 0]
-    del train_df['dataset']
-
-    test_df = full_df[full_df.dataset == 1]
-    del test_df['dataset']
-    del test_df['TARGET']
-
-    print('Processed full_df memory size %s' % (memory_usage(full_df)))
-    #validate_dataframe(full_df, train_df, test_df)
-
-    del full_df
-    return train_df, test_df
+    return df[df['TARGET'].notnull()], df[df['TARGET'].isnull()]
 
 
 def save_submission(df, model_name, type, scores):

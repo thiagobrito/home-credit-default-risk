@@ -58,6 +58,12 @@ def run(train_df, test_df):
     x_train, y_train = data.extract_values_from_dataframe(train_df, features)
 
     dataset = lgb.Dataset(x_train, y_train)
+
+    params = {'n_estimators': 10000, 'learning_rate': 0.02, 'num_leaves': 34, 'colsample_bytree': 0.9497036,
+              'subsample': 0.8715623, 'max_depth': 8, 'reg_alpha': 0.041545473, 'reg_lambda': 0.0735294,
+              'min_split_gain': 0.0222415, 'min_child_weight': 39.3259775}
+
+    '''
     params = {'boosting_type': 'gbdt', 'class_weight': None, 'colsample_bytree': 0.7, 'learning_rate': 0.1,
               'max_depth': 3, 'min_child_samples': 20, 'min_child_weight': 0.001, 'min_split_gain': 0.0,
               'n_estimators': 150, 'n_jobs': -1, 'num_leaves': 2,
@@ -67,9 +73,9 @@ def run(train_df, test_df):
               'nthread': 3, 'bagging_fraction': 0.5, 'bagging_freq': 5, 'feature_fraction': 0.2, 'is_unbalance': True,
               'metric': {'auc'},
               'verbose': 0}
-
+    '''
     # Use small learning_rate with large num_iterations
-    params['num_iterations'] = 5000
+    # params['num_iterations'] = 5000
 
     model = LgbmAdapter(params, dataset, features, 20)
     train_predict, cross_scores, success_items = validation.cross_val_predict_proba(model, x_train, y_train,
