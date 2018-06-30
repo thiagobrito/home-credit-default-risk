@@ -6,49 +6,55 @@ import data
 import paths
 
 from lgbm_util import LgbmAdapter
-import cat_features
+from models.learning_rate import *
 
-sorted_features = ['EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3', 'OWN_CAR_AGE', 'AVERAGE_LOAN_TYPE',
-                   'AVG_ENDDATE_FUTURE', 'OVERDUE_DEBT_RATIO', 'AVG_CREDITDAYS_PROLONGED', 'BUREAU_LOAN_COUNT',
-                   'BUREAU_LOAN_TYPES', 'SUM_RISK_SCORE', 'STD_DAYS_DIFF', 'STD_DAYS_ENDDATE_DIFF', 'STD_RISK_SCORE',
-                   'ORGANIZATION_TYPE', 'CREDIT_ENDDATE_PERCENTAGE', 'APARTMENTS_AVG', 'APARTMENTS_MODE',
-                   'APARTMENTS_MEDI', 'CODE_GENDER', 'HOUR_APPR_PROCESS_START', 'COMMONAREA_AVG',
-                   'NONLIVINGAPARTMENTS_AVG', 'NONLIVINGAREA_AVG', 'COMMONAREA_MODE', 'NONLIVINGAPARTMENTS_MODE',
-                   'NONLIVINGAREA_MODE', 'COMMONAREA_MEDI', 'NONLIVINGAPARTMENTS_MEDI', 'NONLIVINGAREA_MEDI',
-                   'FONDKAPREMONT_MODE', 'HOUSETYPE_MODE', 'TOTALAREA_MODE', 'TOTAL_CUSTOMER_DEBT',
-                   'TOTAL_CUSTOMER_CREDIT', 'TOTAL_CUSTOMER_OVERDUE', 'CNT_CHILDREN', 'CNT_FAM_MEMBERS',
-                   'ENTRANCES_AVG', 'ENTRANCES_MODE', 'ENTRANCES_MEDI', 'AMT_INCOME_TOTAL', 'AMT_CREDIT', 'AMT_ANNUITY',
-                   'AMT_GOODS_PRICE', 'EMERGENCYSTATE_MODE', 'AMT_REQ_CREDIT_BUREAU_HOUR', 'AMT_REQ_CREDIT_BUREAU_DAY',
-                   'AMT_REQ_CREDIT_BUREAU_WEEK', 'AMT_REQ_CREDIT_BUREAU_MON', 'AMT_REQ_CREDIT_BUREAU_QRT',
-                   'AMT_REQ_CREDIT_BUREAU_YEAR', 'FLAG_OWN_CAR', 'FLAG_OWN_REALTY', 'FLAG_MOBIL', 'FLAG_EMP_PHONE',
-                   'FLAG_WORK_PHONE', 'FLAG_CONT_MOBILE', 'FLAG_PHONE', 'FLAG_EMAIL', 'ELEVATORS_AVG', 'FLOORSMAX_AVG',
-                   'FLOORSMIN_AVG', 'ELEVATORS_MODE', 'FLOORSMAX_MODE', 'FLOORSMIN_MODE', 'ELEVATORS_MEDI',
-                   'FLOORSMAX_MEDI',
-                   'FLOORSMIN_MEDI', 'FLAG_DOCUMENT_2', 'FLAG_DOCUMENT_3', 'FLAG_DOCUMENT_4', 'FLAG_DOCUMENT_5',
-                   'FLAG_DOCUMENT_6', 'FLAG_DOCUMENT_7', 'FLAG_DOCUMENT_8', 'FLAG_DOCUMENT_9', 'FLAG_DOCUMENT_10',
-                   'FLAG_DOCUMENT_11', 'FLAG_DOCUMENT_12', 'FLAG_DOCUMENT_13', 'FLAG_DOCUMENT_14', 'FLAG_DOCUMENT_15',
-                   'FLAG_DOCUMENT_16', 'FLAG_DOCUMENT_17', 'FLAG_DOCUMENT_18', 'FLAG_DOCUMENT_19', 'FLAG_DOCUMENT_20',
-                   'FLAG_DOCUMENT_21', 'LIVE_REGION_NOT_WORK_REGION', 'LIVE_CITY_NOT_WORK_CITY', 'LIVINGAPARTMENTS_AVG',
-                   'LIVINGAREA_AVG', 'LIVINGAPARTMENTS_MODE', 'LIVINGAREA_MODE', 'LIVINGAPARTMENTS_MEDI',
-                   'LIVINGAREA_MEDI',
-                   'MIN_DAYS_DIFF', 'MIN_DAYS_ENDDATE_DIFF', 'MIN_RISK_SCORE', 'REGION_POPULATION_RELATIVE',
-                   'REGION_RATING_CLIENT', 'REGION_RATING_CLIENT_W_CITY', 'WEEKDAY_APPR_PROCESS_START',
-                   'REG_REGION_NOT_LIVE_REGION', 'REG_REGION_NOT_WORK_REGION', 'REG_CITY_NOT_LIVE_CITY',
-                   'REG_CITY_NOT_WORK_CITY', 'YEARS_BEGINEXPLUATATION_AVG', 'YEARS_BUILD_AVG',
-                   'YEARS_BEGINEXPLUATATION_MODE',
-                   'YEARS_BUILD_MODE', 'YEARS_BEGINEXPLUATATION_MEDI', 'YEARS_BUILD_MEDI', 'DEF_30_CNT_SOCIAL_CIRCLE',
-                   'DEF_60_CNT_SOCIAL_CIRCLE', 'MEAN_DAYS_DIFF', 'MEAN_DAYS_ENDDATE_DIFF', 'DEBT_CREDIT_RATIO',
-                   'MEAN_RISK_SCORE', 'OCCUPATION_TYPE', 'ACTIVE_LOANS_PERCENTAGE', 'OBS_30_CNT_SOCIAL_CIRCLE',
-                   'OBS_60_CNT_SOCIAL_CIRCLE', 'NAME_CONTRACT_TYPE', 'NAME_TYPE_SUITE', 'NAME_INCOME_TYPE',
-                   'NAME_EDUCATION_TYPE', 'NAME_FAMILY_STATUS', 'NAME_HOUSING_TYPE', 'DAYS_BIRTH', 'DAYS_EMPLOYED',
-                   'DAYS_REGISTRATION', 'DAYS_ID_PUBLISH', 'BASEMENTAREA_AVG', 'LANDAREA_AVG', 'BASEMENTAREA_MODE',
-                   'LANDAREA_MODE', 'BASEMENTAREA_MEDI', 'LANDAREA_MEDI', 'WALLSMATERIAL_MODE',
-                   'DAYS_LAST_PHONE_CHANGE',
-                   'MAX_DAYS_DIFF', 'MAX_DAYS_ENDDATE_DIFF', 'MAX_RISK_SCORE']
+from scipy.stats import randint as sp_randint
+from scipy.stats import uniform as sp_uniform
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+from sklearn.model_selection import train_test_split
 
 
 def name():
-    return 'layer_1_model_lgbm'
+    return 'layer_1_model_lgbm_v2'
+
+
+# https://www.kaggle.com/mlisovyi/lightgbm-hyperparameter-optimisation-lb-0-761
+def params_optimize(x_train, y_train):
+    x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.20, stratify=y_train)
+    fit_params = {"early_stopping_rounds": 30,
+                  "eval_metric": 'auc',
+                  "eval_set": [(x_test, y_test)],
+                  'eval_names': ['valid'],
+                  # 'callbacks': [lgb.reset_parameter(learning_rate=learning_rate_010_decay_power_099)],
+                  'verbose': 100,
+                  'categorical_feature': 'auto'}
+
+    param_test = {'num_leaves': sp_randint(6, 50),
+                  'min_child_samples': sp_randint(100, 500),
+                  'min_child_weight': [1e-5, 1e-3, 1e-2, 1e-1, 1, 1e1, 1e2, 1e3, 1e4],
+                  'subsample': sp_uniform(loc=0.2, scale=0.8),
+                  'colsample_bytree': sp_uniform(loc=0.4, scale=0.6),
+                  'reg_alpha': [0, 1e-1, 1, 2, 5, 7, 10, 50, 100],
+                  'reg_lambda': [0, 1e-1, 1, 5, 10, 20, 50, 100],
+                  'n_estimators': [1000, 10000,
+                                   2000, 20000,
+                                   3000, 30000,
+                                   5000, 50000,
+                                   7000, 70000,
+                                   13000, 130000]}
+
+    hp_points_to_test = 200
+    clf = lgb.LGBMClassifier(max_depth=-1, silent=True, metric='None', n_jobs=4, n_estimators=5000)
+    gs = RandomizedSearchCV(
+        estimator=clf, param_distributions=param_test,
+        n_iter=hp_points_to_test,
+        scoring='roc_auc',
+        cv=3,
+        refit=True,
+        verbose=True)
+
+    gs.fit(x_train, y_train, **fit_params)
+    print('Best score reached: {} with params: {} '.format(gs.best_score_, gs.best_params_))
 
 
 def run(train_df, test_df):
@@ -56,28 +62,19 @@ def run(train_df, test_df):
     features = list(set(train_df.columns) - set(features_to_drop))
 
     x_train, y_train = data.extract_values_from_dataframe(train_df, features)
+    #params_optimize(x_train, y_train)
 
     dataset = lgb.Dataset(x_train, y_train)
 
-    params = {'n_estimators': 10000, 'learning_rate': 0.02, 'num_leaves': 34, 'colsample_bytree': 0.9497036,
-              'subsample': 0.8715623, 'max_depth': 8, 'reg_alpha': 0.041545473, 'reg_lambda': 0.0735294,
-              'min_split_gain': 0.0222415, 'min_child_weight': 39.3259775}
+    params = {'n_estimators': 50000, 'learning_rate': 0.1, 'num_leaves': 20, 'colsample_bytree': 0.64331178360329422,
+              'subsample': 0.89456134209978089, 'max_depth': 8, 'reg_alpha': 10, 'reg_lambda': 10,
+              'min_split_gain': 0.0222415, 'min_child_weight': 1e-05, 'objective': 'binary', 'is_unbalance': True,
+              'min_child_samples': 224}
 
-    '''
-    params = {'boosting_type': 'gbdt', 'class_weight': None, 'colsample_bytree': 0.7, 'learning_rate': 0.1,
-              'max_depth': 3, 'min_child_samples': 20, 'min_child_weight': 0.001, 'min_split_gain': 0.0,
-              'n_estimators': 150, 'n_jobs': -1, 'num_leaves': 2,
-              'objective': 'binary',
-              'reg_alpha': 0,
-              'reg_lambda': 0, 'silent': True, 'subsample': 0.8, 'subsample_for_bin': 200000, 'subsample_freq': 1,
-              'nthread': 3, 'bagging_fraction': 0.5, 'bagging_freq': 5, 'feature_fraction': 0.2, 'is_unbalance': True,
-              'metric': {'auc'},
-              'verbose': 0}
-    '''
-    # Use small learning_rate with large num_iterations
-    # params['num_iterations'] = 5000
+    # RandomGridSearch best params 0.7662859436419786
+    # {'colsample_bytree': 0.64331178360329422, 'min_child_samples': 224, 'min_child_weight': 1e-05, 'num_leaves': 20, 'reg_alpha': 10, 'reg_lambda': 10, 'subsample': 0.89456134209978089}
 
-    model = LgbmAdapter(params, dataset, features, 20)
+    model = LgbmAdapter(params, dataset, features, 20, learning_rate_010_decay_power_099)
     train_predict, cross_scores, success_items = validation.cross_val_predict_proba(model, x_train, y_train,
                                                                                     features, use_proba=False)
     print(name(), cross_scores)

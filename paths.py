@@ -17,5 +17,9 @@ def make_results_path(model_name, type, scores):
     return results_path.replace('.', '_') + '.csv'
 
 
+def make_dataset_path(file_name):
+    return os.path.join(current_directory(), 'dataset', file_name)
+
+
 def indices_path():
     return os.path.join(results_directory(), 'indices.json')

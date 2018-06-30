@@ -53,26 +53,37 @@ def extract_values_from_dataframe(df, features):
     return df[features].values, None
 
 
-def load_dataset():
-    df = pd.read_csv('../dataset/processed_application.csv')
+def load_dataset(save_correlation=False):
+    print('Loading data...')
+    df = pd.read_csv(paths.make_dataset_path('processed_application.csv'))
 
-    bureau = pd.read_csv('../dataset/processed_bureau.csv')
+    bureau = pd.read_csv(paths.make_dataset_path('processed_bureau.csv'))
     df = df.join(bureau.set_index('SK_ID_CURR'), how='left', on='SK_ID_CURR')
 
-    credit_card_balance_df = pd.read_csv('../dataset/processed_credit_card_balance.csv')
+    credit_card_balance_df = pd.read_csv(paths.make_dataset_path('processed_credit_card_balance.csv'))
     df = df.join(credit_card_balance_df, how='left', on='SK_ID_CURR')
 
-    installments_payments_df = pd.read_csv('../dataset/processed_installments_payments.csv')
+    installments_payments_df = pd.read_csv(paths.make_dataset_path('processed_installments_payments.csv'))
     df = df.join(installments_payments_df, how='left', on='SK_ID_CURR')
 
-    pos_cash_df = pd.read_csv('../dataset/processed_pos_cash.csv')
+    pos_cash_df = pd.read_csv(paths.make_dataset_path('processed_pos_cash.csv'))
     df = df.join(pos_cash_df, how='left', on='SK_ID_CURR')
 
-    previous_applications_df = pd.read_csv('../dataset/processed_previous_applications.csv')
+    previous_applications_df = pd.read_csv(paths.make_dataset_path('processed_previous_applications.csv'))
     df = df.join(previous_applications_df, how='left', on='SK_ID_CURR')
+    print('Done.')
+
+    if save_correlation:
+        print('Save correlation...')
+        df.corr().to_csv(paths.make_dataset_path('correlations.csv'), index=False)
+        print('Done.')
 
     return df[df['TARGET'].notnull()], df[df['TARGET'].isnull()]
 
 
 def save_submission(df, model_name, type, scores):
     df.to_csv(paths.make_results_path(model_name, type, np.median(scores)), index=False)
+
+
+if __name__ == '__main__':
+    load_dataset(save_correlation=True)

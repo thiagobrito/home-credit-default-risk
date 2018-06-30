@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 
 
 class LgbmAdapter:
-    def __init__(self, params, dataset, feature_name, num_boost_round):
+    def __init__(self, params, dataset, feature_name, num_boost_round, callbacks=None):
         self._params = params
         self._dataset = dataset
         self._num_boost_round = num_boost_round
         self._feature_name = feature_name
         self.feature_importances_ = []
+        self._callbacks = callbacks
         self._model = None
 
     def fit(self, x, y):
