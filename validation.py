@@ -9,7 +9,7 @@ import paths
 
 
 def cross_validation_index(X, y, n_folds, random_state):
-    return StratifiedKFold(n_splits=n_folds, random_state=random_state).split(X, y)
+    return StratifiedKFold(n_splits=n_folds, random_state=random_state, shuffle=False).split(X, y)
 
 
 def cross_val_predict_proba(classifier, X, y, features, n_folds=5, random_state=0, verbose=True, use_proba=True):
@@ -24,7 +24,9 @@ def cross_val_predict_proba(classifier, X, y, features, n_folds=5, random_state=
         if verbose:
             print('\tcv=%d' % i, end=' ', flush=True)
 
-        classifier.fit(X[index_train], y[index_train]) #, epochs=2)
+        classifier.fit(X[index_train], y[index_train], eval_metric='auc', verbose=100,
+                       eval_set=[(X[index_train], y[index_train]), (X[index_test], y[index_test])],
+                       early_stopping_rounds=200)
         if use_proba:
             predict[index_test] = classifier.predict_proba(X[index_test])[:, 1]
         else:

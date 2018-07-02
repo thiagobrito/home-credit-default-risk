@@ -78,6 +78,7 @@ def load_dataset(save_correlation=False):
         df.corr().to_csv(paths.make_dataset_path('correlations.csv'), index=False)
         print('Done.')
 
+    #df = pd.read_csv(paths.make_dataset_path('simple_features_full_df.csv'))
     return df[df['TARGET'].notnull()], df[df['TARGET'].isnull()]
 
 
