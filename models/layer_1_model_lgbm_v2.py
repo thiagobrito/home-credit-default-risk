@@ -74,15 +74,13 @@ def run(train_df, test_df):
     # RandomGridSearch best params 0.7662859436419786
     # {'colsample_bytree': 0.64331178360329422, 'min_child_samples': 224, 'min_child_weight': 1e-05, 'num_leaves': 20, 'reg_alpha': 10, 'reg_lambda': 10, 'subsample': 0.89456134209978089}
 
-    model = LgbmAdapter(params, dataset, features, 20, learning_rate_010_decay_power_099)
-    train_predict, cross_scores, success_items = validation.cross_val_predict_proba(model, x_train, y_train,
-                                                                                    features, use_proba=False)
+    classifier = LgbmAdapter(params, dataset, features, 20, learning_rate_010_decay_power_099)
+    train_pred, test_pred, cross_scores = validation.cross_val_predict(classifier, train_df, test_df, features,
+                                                                       use_proba=False)
     print(name(), cross_scores)
-
-    x_tournament, _ = data.extract_values_from_dataframe(test_df, features)
     return cross_scores, \
-           pd.DataFrame(data={'SK_ID_CURR': train_df["SK_ID_CURR"].values, 'TARGET': train_predict}), \
-           pd.DataFrame(data={'SK_ID_CURR': test_df["SK_ID_CURR"].values, 'TARGET': model.predict(x_tournament)})
+           pd.DataFrame(data={'SK_ID_CURR': train_df["SK_ID_CURR"].values, 'TARGET': train_pred}), \
+           pd.DataFrame(data={'SK_ID_CURR': test_df["SK_ID_CURR"].values, 'TARGET': test_pred})
 
 
 if __name__ == '__main__':

@@ -71,14 +71,13 @@ def load_dataset(save_correlation=False):
 
     previous_applications_df = pd.read_csv(paths.make_dataset_path('processed_previous_applications.csv'))
     df = df.join(previous_applications_df, how='left', on='SK_ID_CURR')
-    print('Done.')
 
     if save_correlation:
-        print('Save correlation...')
+        print('\tSave correlation...')
         df.corr().to_csv(paths.make_dataset_path('correlations.csv'), index=False)
-        print('Done.')
 
     #df = pd.read_csv(paths.make_dataset_path('simple_features_full_df.csv'))
+    print('Done.')
     return df[df['TARGET'].notnull()], df[df['TARGET'].isnull()]
 
 

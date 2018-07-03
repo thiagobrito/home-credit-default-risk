@@ -71,15 +71,14 @@ def run(train_df, test_df):
     # Use small learning_rate with large num_iterations
     params['num_iterations'] = 5000
 
-    model = LgbmAdapter(params, dataset, features, 20)
-    train_predict, cross_scores, success_items = validation.cross_val_predict_proba(model, x_train, y_train,
-                                                                                    features, use_proba=False)
-    print(name(), cross_scores)
+    classifier = LgbmAdapter(params, dataset, features, 20)
+    train_pred, test_pred, cross_scores = validation.cross_val_predict(classifier, train_df, test_df, features,
+                                                                       use_proba=False)
 
-    x_tournament, _ = data.extract_values_from_dataframe(test_df, features)
+    print(name(), cross_scores)
     return cross_scores, \
-           pd.DataFrame(data={'SK_ID_CURR': train_df["SK_ID_CURR"].values, 'TARGET': train_predict}), \
-           pd.DataFrame(data={'SK_ID_CURR': test_df["SK_ID_CURR"].values, 'TARGET': model.predict(x_tournament)})
+           pd.DataFrame(data={'SK_ID_CURR': train_df["SK_ID_CURR"].values, 'TARGET': train_pred}), \
+           pd.DataFrame(data={'SK_ID_CURR': test_df["SK_ID_CURR"].values, 'TARGET': test_pred})
 
 
 if __name__ == '__main__':

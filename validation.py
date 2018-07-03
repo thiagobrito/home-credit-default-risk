@@ -12,38 +12,33 @@ def cross_validation_index(X, y, n_folds, random_state):
     return StratifiedKFold(n_splits=n_folds, random_state=random_state, shuffle=False).split(X, y)
 
 
-def cross_val_predict_proba(classifier, X, y, features, n_folds=5, random_state=0, verbose=True, use_proba=True):
+def cross_val_predict(classifier, train_df, test_df, features, n_splits=5, random_state=0, use_proba=True):
+    train_pred = np.zeros(train_df.shape[0])
+    test_pred = np.zeros(test_df.shape[0])
     cross_scores = np.empty(0)
-    predict = np.empty(y.shape)
-    success_items = np.zeros(y.shape)
 
-    i = 0
-    for index_train, index_test in cross_validation_index(X, y, n_folds, random_state):
-        start_time = datetime.datetime.now()
+    folds = StratifiedKFold(n_splits=n_splits, shuffle=False, random_state=random_state)
+    for n_fold, (train_idx, valid_idx) in enumerate(folds.split(train_df[features], train_df['TARGET'])):
+        train_x, train_y = train_df[features].iloc[train_idx], train_df['TARGET'].iloc[train_idx]
+        valid_x, valid_y = train_df[features].iloc[valid_idx], train_df['TARGET'].iloc[valid_idx]
 
-        if verbose:
-            print('\tcv=%d' % i, end=' ', flush=True)
+        classifier.fit(train_x, train_y, eval_set=[(train_x, train_y), (valid_x, valid_y)],
+                       eval_metric='auc', early_stopping_rounds=200)
 
-        classifier.fit(X[index_train], y[index_train], eval_metric='auc', verbose=100,
-                       eval_set=[(X[index_train], y[index_train]), (X[index_test], y[index_test])],
-                       early_stopping_rounds=200)
         if use_proba:
-            predict[index_test] = classifier.predict_proba(X[index_test])[:, 1]
+            train_pred[valid_idx] = classifier.predict_proba(valid_x)[:, 1]
+            test_pred += classifier.predict_proba(test_df[features])[:, 1] / folds.n_splits
         else:
-            predict[index_test] = classifier.predict(X[index_test])
-        score = metrics.roc_auc_score(y[index_test], predict[index_test])
+            train_pred[valid_idx] = classifier.predict(valid_x)
+            test_pred += classifier.predict(test_df[features]) / folds.n_splits
 
-        # Identificando os itens que foram sucesso em pelo menos uma passagem
-        success_items[index_test] = np.logical_or(success_items[index_test], predict[index_test] == y[index_test])
-
+        score = metrics.roc_auc_score(valid_y, train_pred[valid_idx])
         cross_scores = np.append(cross_scores, score)
-        if verbose:
-            print('time: %s | score=%f | importance=%s' % (datetime.datetime.now() - start_time, score,
-                                                           show_classificator_data(classifier, features)))
-        i += 1
-    if verbose:
-        print('Final score: %f' % metrics.roc_auc_score(y, predict))
-    return predict, cross_scores, success_items
+
+        print('Fold %2d AUC : %.6f' % (n_fold + 1, score))
+
+    print('Final cross scores: %s' % cross_scores)
+    return train_pred, test_pred, cross_scores
 
 
 def show_classificator_data(algoritm, features):
